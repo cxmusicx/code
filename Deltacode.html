@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Deltacode</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Deltacode">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#0dc0e0">
+<link rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64,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">
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fff;--card:#f1f3f4;--card2:#e4e8ea;--ink:#0a0a0a;--mute:#7d8991;--dot:#98a2a8;--cy:#0dc0e0;--on:#04222a;--vf:#c8d0d8;
+--hd:'Sora',system-ui,sans-serif;--bd:'DM Sans',system-ui,sans-serif;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b0f12;--card:#151b1f;--card2:#1f272c;--ink:#f2f6f7;--mute:#8b979e;--dot:#5d6a71;--vf:#1d262c}}
+:root[data-theme="dark"]{--bg:#0b0f12;--card:#151b1f;--card2:#1f272c;--ink:#f2f6f7;--mute:#8b979e;--dot:#5d6a71;--vf:#1d262c}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.45 var(--bd);min-height:100vh}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+button,input,textarea{font:inherit;color:inherit}
+button{border:0;cursor:pointer}
+:focus-visible{outline:3px solid var(--cy);outline-offset:2px}
+main{max-width:560px;margin:0 auto;padding:0 20px 120px}
+header{display:flex;align-items:center;justify-content:space-between;padding:14px 0 0;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);z-index:5}
+.brand{display:flex;align-items:center;gap:10px;font:800 22px var(--hd);letter-spacing:-.03em}
+.brand svg{width:34px;height:34px}
+.acct{width:44px;height:44px;border-radius:50%;background:var(--cy);display:grid;place-items:center}
+.acct svg{width:24px;height:24px}
+/* viewfinder */
+.vf{position:relative;width:300px;height:260px;margin:44px auto 36px}
+.vf>svg{position:absolute;inset:0;width:100%;height:100%}
+.vf video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;clip-path:polygon(50% 6%,95% 94%,5% 94%);display:none}
+.vf.on video{display:block}
+.scanhint{position:absolute;left:0;right:0;bottom:38px;text-align:center;font:500 14px var(--bd);color:var(--mute);background:none}
+.vf.on .scanhint{display:none}
+.edge{position:absolute;width:158px;height:42px;margin:-21px 0 0 -79px;border-radius:21px;background:var(--card2);color:var(--mute);font:700 15px var(--hd);display:grid;place-items:center;transition:background .15s,color .15s}
+.edge:hover{background:var(--cy);color:var(--on)}
+.edge.l{left:51px;top:116px;transform:rotate(-60deg)}
+.edge.r{left:249px;top:116px;transform:rotate(60deg)}
+/* tabs */
+.seg{display:flex;background:var(--card);border-radius:24px;padding:5px;margin:0 0 20px}
+.seg button{flex:1;padding:10px;border-radius:19px;background:none;font:700 15px var(--hd);color:var(--mute)}
+.seg button[aria-selected=true]{background:var(--card2);color:var(--ink)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.tile{background:var(--card);border-radius:26px;padding:16px 14px 12px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.tile .tri{width:100%;max-width:150px}
+.code{font:700 12px var(--hd);letter-spacing:.14em;color:var(--mute)}
+.row{display:flex;gap:8px;width:100%;margin-top:6px}
+.pill{flex:1;min-width:0;height:42px;border-radius:21px;background:var(--card2);color:var(--mute);font:700 15px var(--hd);padding:0 12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.go{width:42px;height:42px;border-radius:50%;background:var(--cy);display:grid;place-items:center;flex:none}
+.go svg{width:20px;height:20px}
+.empty{grid-column:1/-1;text-align:center;color:var(--mute);padding:28px 10px}
+.fab{position:fixed;left:max(20px,calc(50% - 280px));bottom:calc(20px + env(safe-area-inset-bottom,0px));height:56px;border-radius:28px;background:var(--cy);color:var(--on);font:800 17px var(--hd);display:flex;align-items:center;gap:10px;padding:0 22px 0 18px;box-shadow:0 6px 20px rgba(13,192,224,.35);z-index:6}
+.fab svg{width:22px;height:22px}
+/* sheet */
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center;z-index:20}
+#ov.show{display:flex}
+.sheet{width:100%;max-width:560px;max-height:92vh;overflow:auto;background:var(--bg);border-radius:32px 32px 0 0;padding:22px 22px calc(26px + env(safe-area-inset-bottom,0px));animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(30px);opacity:0}}
+@media(prefers-reduced-motion:reduce){.sheet{animation:none}}
+@media(min-width:700px){#ov{align-items:center}.sheet{border-radius:32px}}
+.sheet h2{font:800 28px var(--hd);letter-spacing:-.03em;margin:0 0 16px}
+.big{width:100%;border:0;background:var(--card);border-radius:26px;padding:20px 24px;font:800 40px var(--hd);letter-spacing:.08em;margin-bottom:12px}
+.big::placeholder{color:var(--card2)}
+.in{width:100%;border:0;background:var(--card);border-radius:20px;padding:14px 18px;margin-bottom:10px}
+textarea.in{min-height:110px;resize:vertical}
+.btn{height:50px;border-radius:25px;padding:0 26px;background:var(--cy);color:var(--on);font:800 16px var(--hd)}
+.btn.g{background:var(--card2);color:var(--ink)}
+.btns{display:flex;gap:10px;margin-top:10px}.btns .btn{flex:1}
+.tri{display:block;width:100%}
+.media{background:var(--card);border-radius:22px;padding:16px 18px;margin:12px 0;word-break:break-word}
+.media img{max-width:100%;border-radius:14px;display:block}
+.media small{color:var(--mute);display:block}
+.chk{display:flex;gap:10px;align-items:center;color:var(--mute);margin:4px 0 6px}
+.note{color:var(--mute);font-size:14px;margin:4px 0 12px}
+#toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:20px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .2s;z-index:30}
+#toast.show{opacity:1}
+.stat{text-align:center;color:var(--mute);font-size:14px;margin:-18px 0 22px;min-height:20px}
+.right,.deskin{display:none}
+.dh{font:800 40px var(--hd);letter-spacing:-.035em;margin:0 0 14px}
+.pair{text-align:center}.pair .tri{max-width:340px;margin:0 auto}
+#panel{min-height:260px;background:var(--card);border-radius:34px;padding:28px;display:grid;place-items:center;margin-top:24px;font:800 48px var(--hd);color:var(--card2);letter-spacing:-.03em}
+#panel.has{display:block;font:400 16px var(--bd);color:var(--ink);letter-spacing:0}
+#panel .media{background:var(--bg)}
+@media(min-width:900px){main{max-width:1120px}.cols{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start;margin-top:40px}.vf,.stat{display:none}.right{display:block;position:sticky;top:96px}.deskin{display:block}.fab{left:max(20px,calc(50% - 540px))}}
+</style>
+</head>
+<body>
+<main>
+<header>
+ <div class="brand"><svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="50,17 83,77 17,77" fill="none" stroke="#0dc0e0" stroke-width="13" stroke-linejoin="round"/><circle cx="50" cy="55" r="9" fill="#0dc0e0"/></svg>Deltacode</div>
+ <button class="acct" id="acct" aria-label="Account"><svg viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.5 3.6-7 8-7s8 2.5 8 7z"/></svg></button>
+</header>
+
+<div class='cols'><div class='left'>
+<div class='deskin'><h2 class='dh'>Enter a code</h2><input class='big' id='dci' inputmode='numeric' maxlength='6' placeholder='123456' autocomplete='off' aria-label='Enter a code'></div>
+<div class="vf" id="vf">
+ <svg viewBox="0 0 300 260" aria-hidden="true"><polygon points="150,22 278,238 22,238" fill="var(--vf)" stroke="var(--vf)" stroke-width="36" stroke-linejoin="round"/></svg>
+ <video id="cam" playsinline muted></video>
+ <button class="scanhint" id="scan">Tap to scan a code</button>
+ <button class="edge l" id="eUser">username</button>
+ <button class="edge r" id="eCode">code</button>
+</div>
+
+<p class='stat' id='stat'></p>
+<div class="seg" role="tablist"><button role="tab" id="tScanned" aria-selected="true">scanned</button><button role="tab" id="tMade" aria-selected="false">made</button></div>
+<div class="grid" id="grid"></div></div>
+<aside class='right'><div class='pair'><div id='pairTri'></div><p class='note' id='pst'>Scan this with your phone, then scan any code. It opens here.</p></div><div id='panel'>media here</div></aside></div>
+</main>
+
+<button class="fab" id="new"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 4v16M4 12h16"/></svg>New</button>
+<div id="ov"><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
+<div id="toast"></div>
+
+<script>window.FIREBASE_CONFIG={databaseURL:'https://deltacodecx-default-rtdb.firebaseio.com',apiKey:'AIzaSyAOTn7MnJNxZgzW_pbGraogu-s4uY37OnM'};</script>
+<script>
+const $=s=>document.querySelector(s);
+/* ---- code geometry: 6 dots, 9 edges, 5 styles => 5^9 > 10^6 so every 6-digit code is unique ---- */
+const P=[[100,12],[62,76],[138,76],[24,140],[100,140],[176,140]];
+const E=[[0,1],[0,2],[1,2],[1,3],[1,4],[2,4],[2,5],[3,4],[4,5]];
+const styles=c=>{let n=+c,a=[];for(let i=0;i<9;i++){a.push(n%5);n=Math.floor(n/5)}return a};
+function ln(a,b,t,w=9){
+ if(t==4)return'';
+ const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L,nx=-uy,ny=ux,g=13;
+ const A=[a[0]+ux*g,a[1]+uy*g],B=[b[0]-ux*g,b[1]-uy*g];
+ const S=`stroke="var(--ink)" fill="none" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"`;
+ const mx=B[0]-A[0],my=B[1]-A[1];
+ if(t==0)return`<path d="M${A}L${B}" ${S}/>`;
+ if(t==1)return`<path d="M${A}C${A[0]+mx*.3+nx*16},${A[1]+my*.3+ny*16} ${B[0]-mx*.3-nx*16},${B[1]-my*.3-ny*16} ${B}" ${S}/>`;
+ if(t==2){let o='';for(let i=0;i<4;i++)o+=`<circle cx="${A[0]+mx*i/3}" cy="${A[1]+my*i/3}" r="${w*.51}" fill="var(--ink)"/>`;return o}
+ let d=`M${A}`;
+ if(Math.abs(dy)<1)for(let i=0;i<4;i++)d+=`H${A[0]+mx*(i+1)/4}V${A[1]+(i%2?0:-6)}`;
+ else for(let i=1;i<=4;i++)d+=`H${A[0]+mx*i/4}V${A[1]+my*i/4}`;
+ return`<path d="${d}" ${S.replace('9','8')}/>`;
+}
+function tri(c){let o='<svg viewBox="0 0 200 156" class="tri" role="img" aria-label="Code '+c+'">';
+ P.forEach(p=>o+=`<circle cx="${p[0]}" cy="${p[1]}" r="8" fill="var(--dot)"/>`);
+ styles(c).forEach((s,i)=>o+=ln(P[E[i][0]],P[E[i][1]],s));return o+'</svg>'}
+
+/* ---- storage adapter: browser cache now; swap get/set for Firebase when signed in ---- */
+const store={
+ get(k){try{return JSON.parse(localStorage.getItem('dc_'+k))||{}}catch(e){return{}}},
+ set(k,v){try{localStorage.setItem('dc_'+k,JSON.stringify(v));return true}catch(e){toast('Storage is full');return false}}
+};
+let tab='scanned';
+const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(t._);t._=setTimeout(()=>t.classList.remove('show'),2200)};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const host=u=>{try{return new URL(u).hostname.replace(/^www\./,'')}catch(e){return u}};
+const ARROW='<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>';
+
+function render(){
+ $('#tScanned').setAttribute('aria-selected',tab=='scanned');$('#tMade').setAttribute('aria-selected',tab=='made');
+ const d=store.get(tab),ks=Object.keys(d).sort((a,b)=>d[b].t-d[a].t);
+ $('#grid').innerHTML=ks.length?ks.map(c=>tile(c,d[c])).join(''):
+  `<div class="empty">${tab=='made'?'Nothing made yet. Tap New to create your first code.':'No scanned codes yet. Scan one or type its code.'}</div>`;
+}
+$('#grid').onclick=e=>{const b=e.target.closest('[data-o]');if(b)openCode(b.dataset.o)};
+$('#tScanned').onclick=()=>{tab='scanned';render()};$('#tMade').onclick=()=>{tab='made';render()};
+
+/* ---- sheet ---- */
+const ov=$('#ov'),sh=$('#sheet');
+function sheet(h){sh.innerHTML=h;ov.classList.add('show');const f=sh.querySelector('input,textarea');f&&setTimeout(()=>f.focus(),50)}
+function close(){ov.classList.remove('show');sh.innerHTML='';if(location.hash)history.replaceState(null,'',location.pathname+location.search)}
+ov.onclick=e=>{if(e.target===ov)close()};
+addEventListener('keydown',e=>{if(e.key=='Escape')close()});
+
+async function openCode(c,fromEntry,remote,ri){
+ const m=store.get('made'),s=store.get('scanned');let i=remote?ri:(m[c]||s[c]||await cloud.get(c));
+ if(!remote&&i&&!m[c]){s[c]=Object.assign(s[c]||i,{t:Date.now()});store.set('scanned',s);if(auth.u&&base)db(`users/${auth.u.uid}/scanned/${c}`,'PUT',true).catch(()=>{})}
+ let med=`<div class="media">No media for this code on this device yet.<small>Codes you make here open on the device that made them until accounts are connected.</small></div>`,main='';
+ if(i){
+  if(i.type=='url'){med=`<div class="media"><small>Link</small>${esc(i.val)}</div>`;main=`<button class="btn" id="open">Open link</button>`}
+  else if(i.type=='img')med=`<div class="media"><img src="${i.val}" alt="${esc(i.title||'Shared image')}"></div>`;
+  else med=`<div class="media">${esc(i.val).replace(/\n/g,'<br>')}</div>`;
+ }
+ show(`<div style="max-width:280px;margin:0 auto">${tri(c)}</div><div class="code" style="text-align:center;font-size:18px;margin:4px 0 10px">${c.slice(0,3)} ${c.slice(3)}</div>${med}<p class="note" id="cd"></p><div class="btns">${main}<button class="btn g" id="share">Share</button></div>`);
+ if(main)$('#open').onclick=()=>window.open(i.val,'_blank','noopener');
+ $('#share').onclick=async()=>{const u=location.href.split('#')[0]+'#'+c;
+  try{if(navigator.share){await navigator.share({title:'Deltacode '+c,text:'Open this Deltacode',url:u});return}}catch(e){if(e.name=='AbortError')return}
+  try{await navigator.clipboard.writeText(u);toast('Link copied')}catch(e){toast('Copy this: '+u)}};
+ if(remote&&i&&i.type=='url')redirect(i.val);
+ if(!fromEntry&&!remote)try{history.replaceState(null,'','#'+c)}catch(e){}
+}
+
+/* ---- enter code ---- */
+$('#eCode').onclick=()=>{
+ sheet(`<h2>Enter a code</h2><div id="pv" style="max-width:220px;margin:0 auto 8px">${tri('000000')}</div><input class="big" id="ci" inputmode="numeric" maxlength="6" placeholder="123456" autocomplete="off"><div class="btns"><button class="btn" id="go">Open code</button></div>`);
+ const ci=$('#ci');ci.oninput=()=>{ci.value=ci.value.replace(/\D/g,'');if(ci.value.length==6)$('#pv').innerHTML=tri(ci.value)};
+ const go=()=>ci.value.length==6?openCode(ci.value,1):toast('Codes have 6 digits');
+ $('#go').onclick=go;ci.onkeydown=e=>{if(e.key=='Enter')go()};
+};
+$('#eUser').onclick=()=>{
+ sheet(`<h2>See public codes</h2><input class="in" id="un" placeholder="username" autocapitalize="none" autocomplete="off"><p class="note">Type a username to see the public codes on that account.</p><div class="btns"><button class="btn" id="ug">Look up</button></div>`);
+ const ug=()=>userPage($('#un').value);$('#ug').onclick=ug;$('#un').onkeydown=e=>{if(e.key=='Enter')ug()};
+};
+$('#acct').onclick=accountSheet;
+
+/* ---- new code ---- */
+let kind='url';
+$('#new').onclick=()=>{kind='url';newSheet()};
+function newSheet(){
+ sheet(`<h2>New code</h2><div class="seg" role="tablist">${['url','text','img'].map(k=>`<button role="tab" data-k="${k}" aria-selected="${k==kind}">${{url:'link',text:'text',img:'image'}[k]}</button>`).join('')}</div>
+ ${kind=='url'?'<input class="in" id="v" type="url" placeholder="https://" autocapitalize="none">':kind=='text'?'<textarea class="in" id="v" placeholder="Write a message"></textarea>':'<input class="in" id="v" type="file" accept="image/*">'}
+ <input class="in" id="ti" placeholder="Name (optional)" maxlength="40"><label class="chk"><input type="checkbox" id="pub" ${auth.u?'':'disabled'}> ${auth.u?'List on my public page':'Sign in to list publicly'}</label>
+ <div class="btns"><button class="btn" id="mk">Make code</button></div>`);
+ sh.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{kind=b.dataset.k;newSheet()});
+ $('#mk').onclick=async()=>{
+  const v=$('#v');let val=kind=='img'?await shrink(v.files[0]):v.value.trim();
+  if(!val)return toast(kind=='img'?'Choose an image':'Add something to share');
+  if(kind=='url'&&!/^https?:\/\//i.test(val))val='https://'+val;
+  const m=store.get('made');let c,n=0;do{c=String(Math.random()*1e6|0).padStart(6,'0')}while((m[c]||await cloud.get(c))&&++n<20);
+  const it={type:kind,val,title:$('#ti').value.trim(),pub:$('#pub').checked,t:Date.now()};
+  if(auth.u){it.owner=auth.u.uid;it.user=auth.u.name}
+  if(!await cloud.put(c,it))return toast('Could not save. Try again');
+  m[c]=it;if(store.set('made',m)){mine(c,it);tab='made';render();openCode(c,1)}
+ };
+}
+function shrink(f){return new Promise(r=>{if(!f)return r('');const i=new Image,u=URL.createObjectURL(f);i.onload=()=>{const k=Math.min(1,800/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);r(c.toDataURL('image/jpeg',.72))};i.onerror=()=>r('');i.src=u})}
+
+/* ---- cloud + device link: Firebase Realtime DB (REST/SSE) when window.FIREBASE_CONFIG.databaseURL is set, else tabs of the same browser ---- */
+const DB=(window.FIREBASE_CONFIG||{}).databaseURL,base=DB&&DB.replace(/\/$/,'');
+async function db(p,method,body){const t=await auth.token();const r=await fetch(`${base}/${p}.json${t?'?auth='+t:''}`,{method:method||'GET',body:body==null?undefined:JSON.stringify(body)});if(!r.ok)throw new Error(r.status);return r.json()}
+const cloud={
+ async get(c){if(!base)return null;try{return await db('codes/'+c)}catch(e){return null}},
+ async put(c,i){if(!base)return true;try{await db('codes/'+c,'PUT',i);return true}catch(e){return false}}
+};
+
+/* ---- accounts: Firebase Auth over REST. A username becomes the email name@deltacode.invalid, so there is no password recovery ---- */
+const KEY=(window.FIREBASE_CONFIG||{}).apiKey;
+const auth={u:null,
+ async req(url,body){const f=body instanceof URLSearchParams;const r=await fetch(url,{method:'POST',headers:{'Content-Type':f?'application/x-www-form-urlencoded':'application/json'},body:f?body:JSON.stringify(body)});const d=await r.json();if(!r.ok)throw new Error((d.error&&d.error.message)||'FAILED');return d},
+ save(d,name){this.u={uid:d.localId||d.user_id,name,idToken:d.idToken||d.id_token,refresh:d.refreshToken||d.refresh_token,exp:Date.now()+(+(d.expiresIn||d.expires_in)-60)*1e3};store.set('auth',this.u)},
+ async enter(n,pw,create){
+  if(create&&await db('usernames/'+n).catch(()=>null))throw new Error('USERNAME_TAKEN');
+  const d=await this.req(`https://identitytoolkit.googleapis.com/v1/accounts:${create?'signUp':'signInWithPassword'}?key=${KEY}`,{email:n+'@deltacode.invalid',password:pw,returnSecureToken:true});
+  this.save(d,n);if(create)await db('usernames/'+n,'PUT',this.u.uid)},
+ async token(){const u=this.u;if(!u)return null;
+  if(Date.now()>u.exp){try{this.save(await this.req(`https://securetoken.googleapis.com/v1/token?key=${KEY}`,new URLSearchParams({grant_type:'refresh_token',refresh_token:u.refresh})),u.name)}catch(e){this.out();return null}}
+  return this.u.idToken},
+ out(){this.u=null;store.set('auth',{})}};
+auth.u=(s=>s.uid?s:null)(store.get('auth'));
+const nice=m=>({EMAIL_EXISTS:'That username is taken.',USERNAME_TAKEN:'That username is taken.',INVALID_LOGIN_CREDENTIALS:'Wrong username or password.',INVALID_PASSWORD:'Wrong username or password.',EMAIL_NOT_FOUND:'Wrong username or password.',OPERATION_NOT_ALLOWED:'Turn on Email/Password sign-in in Firebase.'}[m]||(m.startsWith('WEAK')?'Password needs 6 or more characters.':'Something went wrong. Try again.'));
+function tile(c,i){return`<div class="tile">${tri(c)}<div class="code">${c}</div><div class="row"><button class="pill" data-o="${c}">${i.type=='url'?esc(host(i.val)):esc(i.title||i.type)}</button><button class="go" data-o="${c}" aria-label="Open ${c}">${ARROW}</button></div></div>`}
+function mine(c,it){if(!auth.u)return;db(`users/${auth.u.uid}/made/${c}`,'PUT',true).catch(()=>{});if(it.pub)db(`byUser/${auth.u.name}/${c}`,'PUT',true).catch(()=>{})}
+async function sync(){if(!auth.u||!base)return;const u=auth.u.uid;try{
+ for(const k of ['made','scanned']){const ks=Object.keys(await db(`users/${u}/${k}`)||{}),d=store.get(k);
+  await Promise.all(ks.filter(c=>!d[c]).map(async c=>{const it=await cloud.get(c);if(it)d[c]=Object.assign(it,{t:it.t||Date.now()})}));store.set(k,d)}
+ render()}catch(e){}}
+function accountSheet(){
+ if(!base||!KEY)return sheet(`<h2>Account</h2><p class="note">Accounts need Firebase connected: set databaseURL and apiKey in FIREBASE_CONFIG.</p><div class="btns"><button class="btn g" onclick="close()">Close</button></div>`);
+ if(auth.u){const n=auth.u.name;
+  sheet(`<h2>${esc(n)}</h2><p class="note">Signed in. Your codes sync across devices.</p><div class="btns"><button class="btn" id="cp">Copy public link</button><button class="btn g" id="so">Sign out</button></div>`);
+  $('#cp').onclick=async()=>{const u=location.href.split('#')[0]+'#u-'+n;try{await navigator.clipboard.writeText(u);toast('Link copied')}catch(e){toast(u)}};
+  $('#so').onclick=()=>{auth.out();close();toast('Signed out')};return}
+ sheet(`<h2>Account</h2><input class="in" id="an" placeholder="username" autocapitalize="none" autocomplete="username" maxlength="20"><input class="in" id="ap" type="password" placeholder="password" autocomplete="current-password"><p class="note" id="ae">Usernames are 3 to 20 letters, numbers or hyphens. There is no email, so a lost password can't be recovered.</p><div class="btns"><button class="btn g" id="si">Sign in</button><button class="btn" id="su">Create account</button></div>`);
+ const go=async create=>{const n=$('#an').value.trim().toLowerCase(),p=$('#ap').value,e=$('#ae');
+  if(!/^[a-z0-9-]{3,20}$/.test(n))return e.textContent='Usernames are 3 to 20 letters, numbers or hyphens.';
+  try{e.textContent='One moment…';await auth.enter(n,p,create);close();toast(create?'Account created':'Signed in');sync()}catch(x){e.textContent=nice(x.message)}};
+ $('#si').onclick=()=>go(0);$('#su').onclick=()=>go(1);
+}
+async function userPage(name){
+ name=name.toLowerCase().trim();if(!base)return toast('Connect Firebase first');
+ let ks,uid;try{uid=await db('usernames/'+name);ks=Object.keys(await db('byUser/'+name)||{})}catch(e){return toast('Could not look that up')}
+ if(!uid)return toast('No account with that username');
+ const its=(await Promise.all(ks.map(async c=>[c,await cloud.get(c)]))).filter(x=>x[1]);
+ sheet(`<h2>${esc(name)}</h2>`+(its.length?`<div class="grid">${its.map(x=>tile(x[0],x[1])).join('')}</div>`:`<p class="note">No public codes yet.</p>`));
+ sh.onclick=e=>{const b=e.target.closest('[data-o]');if(b)openCode(b.dataset.o)};
+}
+const link=base?{
+ listen(sid,fn){let last;fetch(`${base}/sessions/${sid}/desktop.json`,{method:'PUT',body:Date.now()}).catch(()=>{});
+  new EventSource(`${base}/sessions/${sid}/msg.json`).addEventListener('put',e=>{const d=JSON.parse(e.data).data;if(d&&d.id!==last){last=d.id;fn(d)}})},
+ async probe(sid){try{const t=await (await fetch(`${base}/sessions/${sid}/desktop.json`)).json();return !!t&&Date.now()-t<216e5}catch(e){return false}},
+ send(sid,m){fetch(`${base}/sessions/${sid}/msg.json`,{method:'PUT',body:JSON.stringify({...m,id:Math.random()})}).catch(()=>{})}
+}:{
+ listen(sid,fn){const ch=new BroadcastChannel('dc'+sid);ch.onmessage=e=>e.data.t=='ping'?ch.postMessage({t:'pong'}):fn(e.data)},
+ probe(sid){return new Promise(r=>{let ch;try{ch=new BroadcastChannel('dc'+sid)}catch(e){return r(false)}ch.onmessage=e=>{if(e.data.t=='pong'){r(true);ch.close()}};ch.postMessage({t:'ping'});setTimeout(()=>{r(false);ch.close()},600)})},
+ send(sid,m){try{const ch=new BroadcastChannel('dc'+sid);ch.postMessage(m);ch.close()}catch(e){}}
+};
+
+/* ---- desktop: shows a pairing code; a paired phone sends scanned codes here ---- */
+const isDesk=()=>matchMedia('(min-width:900px)').matches,panel=$('#panel');let SID,rt;
+function show(h){if(isDesk()){ov.classList.remove('show');sh.innerHTML='';panel.className='has';panel.innerHTML=h}else sheet(h)}
+function redirect(u){const el=$('#cd');if(!el)return;let n=3;clearInterval(rt);el.textContent='Opening link in 3s. Tap to cancel.';el.onclick=()=>{clearInterval(rt);el.textContent=''};rt=setInterval(()=>{if(--n<1){clearInterval(rt);location.assign(u)}else el.textContent=`Opening link in ${n}s. Tap to cancel.`},1000)}
+function startDesk(){if(SID||!isDesk())return;SID=String(Math.random()*1e6|0).padStart(6,'0');
+ $('#pairTri').innerHTML=tri(SID)+`<div class='code' style='margin:6px 0 4px'>${SID.slice(0,3)} ${SID.slice(3)}</div>`;
+ link.listen(SID,m=>{if(m.t=='paired')$('#pst').textContent='Phone connected. Scan a code with it.';if(m.t=='show')openCode(m.code,1,1,m.item)})}
+matchMedia('(min-width:900px)').addEventListener('change',startDesk);
+$('#dci').oninput=e=>{const v=e.target;v.value=v.value.replace(/\D/g,'');if(v.value.length==6)openCode(v.value,1)};
+
+/* ---- decoder: the camera view is warped into code space (dots on the cutout corners) and each edge is matched against the 5 line styles ---- */
+const W=400,H=312,cv=document.createElement('canvas');cv.width=W;cv.height=H;const cx=cv.getContext('2d',{willReadFrequently:true});
+let TPL,pair=null,last,cnt=0,quiet={};
+const stat=t=>{$('#stat').textContent=t};
+const rast=svg=>new Promise(r=>{const i=new Image;i.onload=()=>{const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.drawImage(i,0,0,W,H);const d=x.getImageData(0,0,W,H).data,m=new Uint8Array(W*H);for(let k=0;k<m.length;k++)m[k]=d[k*4+3]>100?1:0;r(m)};i.onerror=()=>r(new Uint8Array(W*H));i.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)});
+const svgOf=(i,s,w)=>`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 156' width='${W}' height='${H}'>${ln(P[E[i][0]],P[E[i][1]],s,w).replace(/var\(--ink\)/g,'#000')}</svg>`;
+async function tpl(){if(TPL)return;const T9=[],dots=P.map(p=>[p[0]*2,p[1]*2]);TPL=[];
+ for(let i=0;i<9;i++){const t=[],Rm=new Uint8Array(W*H),R=[];
+  for(let s=0;s<4;s++){const m=await rast(svgOf(i,s,9)),D=await rast(svgOf(i,s,19)),T=[];for(let k=0;k<m.length;k++){if(m[k])T.push(k);if(D[k])Rm[k]=1}t.push({T,D})}
+  for(let k=0;k<Rm.length;k++)if(Rm[k]){const x=k%W,y=(k/W)|0;if(!dots.some(d=>Math.hypot(x-d[0],y-d[1])<19))R.push(k)}
+  TPL[i]={t,R}}}
+function frame(v){
+ const vw=v.videoWidth,vh=v.videoHeight;if(!vw)return;
+ const s=Math.max(300/vw,260/vh),m=2/1.776,a=m*s,sx=(vw-300/s)/2,sy=(vh-260/s)/2;
+ cx.setTransform(a,0,0,a,48-15*m-a*sx,24-15.6*m-a*sy);cx.drawImage(v,0,0);cx.setTransform(1,0,0,1,0,0);
+ const d=cx.getImageData(0,0,W,H).data,g=new Uint8Array(W*H),h=new Uint32Array(256);
+ for(let k=0;k<g.length;k++){g[k]=.3*d[k*4]+.59*d[k*4+1]+.11*d[k*4+2];h[g[k]]++}
+ let c=0,lo,hi;for(let k=0;k<256;k++){c+=h[k];if(lo==null&&c>g.length*.05)lo=k;if(hi==null&&c>g.length*.95)hi=k}
+ if(hi-lo<50)return;
+ const th=(lo+hi)/2;let dk=0;for(let k=0;k<g.length;k++)if(g[k]<th)dk++;
+ const inv=dk>g.length/2,ob=new Uint8Array(W*H);for(let k=0;k<g.length;k++)ob[k]=(g[k]<th)!=inv?1:0;
+ let n=0,mn=9;
+ for(let i=0;i<9;i++){const {t,R}=TPL[i];let o=0;for(const p of R)o+=ob[p];
+  let best=.6-.8*o/300,bs=4;
+  for(let q=0;q<4;q++){const {T,D}=t[q];let tp=0,fp=0;for(const p of T)tp+=ob[p];for(const p of R)if(ob[p]&&!D[p])fp++;
+   const sc=(tp-.8*fp)/T.length;if(sc>best){best=sc;bs=q}}
+  n+=bs*5**i;mn=Math.min(mn,best)}
+ return n<1e6&&mn>.4?String(n).padStart(6,'0'):null;
+}
+async function got(c){
+ navigator.vibrate&&navigator.vibrate(30);
+ if(pair){const m=store.get('made'),s=store.get('scanned'),i=m[c]||s[c]||await cloud.get(c);link.send(pair,{t:'show',code:c,item:i||null});stat('Sent '+c+' to your desktop. Scan another.');return}
+ if(await link.probe(c)){pair=c;link.send(c,{t:'paired'});stat('Paired with desktop. Tap here to unpair.');toast('Desktop paired');return}
+ openCode(c);
+}
+$('#stat').onclick=()=>{if(pair){pair=null;stat('Unpaired. Fit the three dots to the corners.')}};
+$('#scan').onclick=async()=>{
+ const v=$('#cam');
+ try{const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});v.srcObject=s;await v.play();await tpl()}
+ catch(e){return toast('Camera unavailable. Type the code instead.')}
+ $('#vf').classList.add('on');stat('Fit the three dots to the corners of the triangle');
+ setInterval(()=>{if(ov.classList.contains('show'))return;const c=frame(v);if(!c){cnt=0;return}
+  if(c==last)cnt++;else{last=c;cnt=1}
+  if(cnt>=3&&Date.now()>(quiet[c]||0)){quiet[c]=Date.now()+4000;got(c)}},150);
+};
+
+/* ---- open shared links like #123456 ---- */
+function hash(){const h=location.hash.slice(1);if(/^\d{6}$/.test(h))openCode(h,1);else if(/^u-[a-z0-9-]{3,20}$/.test(h))userPage(h.slice(2))}
+addEventListener('hashchange',hash);render();startDesk();hash();sync();
+</script>
+</body>
+</html>
