@@ -35,7 +35,7 @@ header{display:flex;align-items:center;justify-content:space-between;padding:14p
 /* viewfinder */
 .vf{position:relative;width:300px;height:260px;margin:44px auto 36px}
 .vf>svg{position:absolute;inset:0;width:100%;height:100%}
-.vf video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;clip-path:polygon(50% 6%,95% 94%,5% 94%);display:none}
+.vf video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;clip-path:polygon(50% 0,100% 100%,0 100%);display:none}
 .vf.on video{display:block}
 .scanhint{position:absolute;left:0;right:0;bottom:38px;text-align:center;font:500 14px var(--bd);color:var(--mute);background:none}
 .vf.on .scanhint{display:none}
@@ -299,29 +299,41 @@ let TPL,pair=null,last,cnt=0,quiet={};
 const stat=t=>{$('#stat').textContent=t};
 const rast=svg=>new Promise(r=>{const i=new Image;i.onload=()=>{const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.drawImage(i,0,0,W,H);const d=x.getImageData(0,0,W,H).data,m=new Uint8Array(W*H);for(let k=0;k<m.length;k++)m[k]=d[k*4+3]>100?1:0;r(m)};i.onerror=()=>r(new Uint8Array(W*H));i.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)});
 const svgOf=(i,s,w)=>`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 156' width='${W}' height='${H}'>${ln(P[E[i][0]],P[E[i][1]],s,w).replace(/var\(--ink\)/g,'#000')}</svg>`;
-async function tpl(){if(TPL)return;const T9=[],dots=P.map(p=>[p[0]*2,p[1]*2]);TPL=[];
- for(let i=0;i<9;i++){const t=[],Rm=new Uint8Array(W*H),R=[];
-  for(let s=0;s<4;s++){const m=await rast(svgOf(i,s,9)),D=await rast(svgOf(i,s,19)),T=[];for(let k=0;k<m.length;k++){if(m[k])T.push(k);if(D[k])Rm[k]=1}t.push({T,D})}
-  for(let k=0;k<Rm.length;k++)if(Rm[k]){const x=k%W,y=(k/W)|0;if(!dots.some(d=>Math.hypot(x-d[0],y-d[1])<19))R.push(k)}
-  TPL[i]={t,R}}}
-function frame(v){
+async function tpl(){if(TPL)return;const dots=P.map(p=>[p[0]*2,p[1]*2]),cnt=new Uint8Array(W*H);TPL=[];
+ for(let i=0;i<9;i++){const Rm=new Uint8Array(W*H),t=[];
+  for(let s=0;s<4;s++){const m=await rast(svgOf(i,s,9)),D=await rast(svgOf(i,s,19)),T=[];for(let k=0;k<m.length;k++){if(m[k])T.push(k);if(D[k])Rm[k]=1}t.push({T})}
+  for(let k=0;k<Rm.length;k++)if(Rm[k]){const x=k%W,y=(k/W)|0;if(dots.some(d=>Math.hypot(x-d[0],y-d[1])<19))Rm[k]=0;else cnt[k]++}
+  TPL[i]={t,Rm}}
+ for(let i=0;i<9;i++){const R=[],own=new Uint8Array(W*H),Rm=TPL[i].Rm;for(let k=0;k<Rm.length;k++)if(Rm[k]&&cnt[k]==1){R.push(k);own[k]=1}
+  TPL[i].R=R;TPL[i].t.forEach(q=>{q.T=q.T.filter(k=>own[k])});delete TPL[i].Rm}}
+function frame(v,tf){tf=tf||[1,0,0];
  const vw=v.videoWidth,vh=v.videoHeight;if(!vw)return;
  const s=Math.max(300/vw,260/vh),m=2/1.776,a=m*s,sx=(vw-300/s)/2,sy=(vh-260/s)/2;
- cx.setTransform(a,0,0,a,48-15*m-a*sx,24-15.6*m-a*sy);cx.drawImage(v,0,0);cx.setTransform(1,0,0,1,0,0);
+ {const b=a*tf[0];cx.setTransform(b,0,0,b,(48-15*m-a*sx-200)*tf[0]+200+tf[1],(24-15.6*m-a*sy-156)*tf[0]+156+tf[2])}cx.drawImage(v,0,0);cx.setTransform(1,0,0,1,0,0);
  const d=cx.getImageData(0,0,W,H).data,g=new Uint8Array(W*H),h=new Uint32Array(256);
  for(let k=0;k<g.length;k++){g[k]=.3*d[k*4]+.59*d[k*4+1]+.11*d[k*4+2];h[g[k]]++}
  let c=0,lo,hi;for(let k=0;k<256;k++){c+=h[k];if(lo==null&&c>g.length*.05)lo=k;if(hi==null&&c>g.length*.95)hi=k}
  if(hi-lo<50)return;
  const th=(lo+hi)/2;let dk=0;for(let k=0;k<g.length;k++)if(g[k]<th)dk++;
  const inv=dk>g.length/2,ob=new Uint8Array(W*H);for(let k=0;k<g.length;k++)ob[k]=(g[k]<th)!=inv?1:0;
- let n=0,mn=9;
+ let n=0,mn=9,sm=0;
  for(let i=0;i<9;i++){const {t,R}=TPL[i];let o=0;for(const p of R)o+=ob[p];
-  let best=.6-.8*o/300,bs=4;
-  for(let q=0;q<4;q++){const {T,D}=t[q];let tp=0,fp=0;for(const p of T)tp+=ob[p];for(const p of R)if(ob[p]&&!D[p])fp++;
-   const sc=(tp-.8*fp)/T.length;if(sc>best){best=sc;bs=q}}
-  n+=bs*5**i;mn=Math.min(mn,best)}
- return n<1e6&&mn>.4?String(n).padStart(6,'0'):null;
+  let best=Math.max(0,1-o/150),bs=4;
+  for(let q=0;q<4;q++){const T=t[q].T;let tp=0;for(const p of T)tp+=ob[p];const sc=tp/(o+T.length-tp||1);if(sc>best){best=sc;bs=q}}
+  n+=bs*5**i;mn=Math.min(mn,best);sm+=best}
+ return {c:n<1e6&&mn>.7?String(n).padStart(6,'0'):null,mn,sm}
 }
+const CAND=[];for(const ds of[1,.92,1.08,1.16])for(const dx of[0,-10,10,-20,20])for(const dy of[0,-10,10,-20,20])CAND.push([ds,dx,dy]);
+let lock=null,ci=0,miss=0;
+const ev=(v,tf)=>frame(v,tf)||{mn:0,sm:0};
+function scan(v){
+ if(lock){const r=ev(v,lock);if(r.c){miss=0;return r.c}if(++miss>6)lock=null;return null}
+ for(let j=0;j<4;j++){let tf=CAND[ci++%CAND.length],r=ev(v,tf);
+  if(r.sm>4.5){for(let it=0;it<10;it++){let bt=tf,br=r;
+   for(const d of[[0,4,0],[0,-4,0],[0,0,4],[0,0,-4],[.03,0,0],[-.03,0,0]]){const t2=[tf[0]+d[0],tf[1]+d[1],tf[2]+d[2]],r2=ev(v,t2);if(r2.sm>br.sm){br=r2;bt=t2}}
+   if(bt===tf)break;tf=bt;r=br}}
+  if(r.c){lock=tf;miss=0;return r.c}}
+ return null}
 async function got(c){
  navigator.vibrate&&navigator.vibrate(30);
  if(pair){const m=store.get('made'),s=store.get('scanned'),i=m[c]||s[c]||await cloud.get(c);link.send(pair,{t:'show',code:c,item:i||null});stat('Sent '+c+' to your desktop. Scan another.');return}
@@ -331,10 +343,11 @@ async function got(c){
 $('#stat').onclick=()=>{if(pair){pair=null;stat('Unpaired. Fit the three dots to the corners.')}};
 $('#scan').onclick=async()=>{
  const v=$('#cam');
- try{const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});v.srcObject=s;await v.play();await tpl()}
- catch(e){return toast('Camera unavailable. Type the code instead.')}
+ try{const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});v.srcObject=s;await v.play()}
+ catch(e){return toast('Allow camera access in your browser, or type the code.')}
+ try{await tpl()}catch(e){return toast('Scanner could not start')}
  $('#vf').classList.add('on');stat('Fit the three dots to the corners of the triangle');
- setInterval(()=>{if(ov.classList.contains('show'))return;const c=frame(v);if(!c){cnt=0;return}
+ setInterval(()=>{if(ov.classList.contains('show'))return;const c=scan(v);if(!c){cnt=0;return}
   if(c==last)cnt++;else{last=c;cnt=1}
   if(cnt>=3&&Date.now()>(quiet[c]||0)){quiet[c]=Date.now()+4000;got(c)}},150);
 };
