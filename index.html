@@ -89,6 +89,10 @@ textarea.in{min-height:110px;resize:vertical}
 #panel.has{display:block;font:400 16px var(--bd);color:var(--ink);letter-spacing:0}
 #panel .media{background:var(--bg)}
 @media(min-width:900px){main{max-width:1120px}.cols{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start;margin-top:40px}.vf,.stat{display:none}.right{display:block;position:sticky;top:96px}.deskin{display:block}.fab{left:max(20px,calc(50% - 540px))}}
+.guide{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:none;fill:none;stroke:var(--cy);stroke-width:3;stroke-dasharray:5 6;stroke-linejoin:round}
+.guide path{stroke-width:2;opacity:.5}
+.vf.on .guide{display:block}
+.vf.lk .guide{stroke-dasharray:none}.vf.lk .guide path{opacity:.9}
 </style>
 </head>
 <body>
@@ -103,6 +107,7 @@ textarea.in{min-height:110px;resize:vertical}
 <div class="vf" id="vf">
  <svg viewBox="0 0 300 260" aria-hidden="true"><polygon points="150,22 278,238 22,238" fill="var(--vf)" stroke="var(--vf)" stroke-width="36" stroke-linejoin="round"/></svg>
  <video id="cam" playsinline muted></video>
+ <svg class="guide" viewBox="0 0 300 260" aria-hidden="true"><path d="M150 15.6L285 243H15Z"/><circle cx="150" cy="15.6" r="15"/><circle cx="15" cy="243" r="15"/><circle cx="285" cy="243" r="15"/></svg>
  <button class="scanhint" id="scan">Tap to scan a code</button>
  <button class="edge l" id="eUser">username</button>
  <button class="edge r" id="eCode">code</button>
@@ -336,16 +341,22 @@ let lock=null,ci=0,miss=0,acc=null,na=0,pct=0;
 const ev=(v,tf)=>frame(v,tf)||{mn:0,sm:0};
 function vote(r){
  if(!acc){acc=Array.from({length:9},()=>[0,0,0,0,0]);na=0}
- r.sc.forEach((e,i)=>e.forEach((v,q)=>acc[i][q]+=v));na++;if(na<4)return null;
- let n=0,ok=true;acc.forEach((e,i)=>{const o=e.map((v,q)=>[v,q]).sort((x,y)=>y[0]-x[0]);if(o[0][0]-o[1][0]<.2*na)ok=false;n+=o[0][1]*5**i});
- if(ok&&n<1e6){acc=null;return String(n).padStart(6,'0')}return null}
+ r.sc.forEach((e,i)=>e.forEach((v,q)=>acc[i][q]+=v));na++;if(na<3)return null;
+ const pk=acc.map(e=>{const o=e.map((v,q)=>[v,q]).sort((x,y)=>y[0]-x[0]);return{b:o[0][1],s:o[1][1],m:(o[0][0]-o[1][0])/na}});
+ if(na<8&&pk.some(p=>p.m<.1))return null;
+ let n=0;pk.forEach((p,i)=>n+=p.b*5**i);
+ if(n>=1e6){
+  const ord=pk.map((p,i)=>[p.m,i]).sort((x,y)=>x[0]-y[0]).slice(0,4);let bst=null;
+  for(let k=1;k<16;k++){let x=n,c=0;ord.forEach(([m,i],j)=>{if(k>>j&1){x+=(pk[i].s-pk[i].b)*5**i;c+=m}});if(x<1e6&&(!bst||c<bst.c))bst={x,c}}
+  if(!bst){if(na>14)acc=null;return null}n=bst.x}
+ acc=null;return String(n).padStart(6,'0')}
 function scan(v){
  if(lock){let r=ev(v,lock);if(r.mn<.85){[lock,r]=refine(v,lock,r,[.25],2)}pct=r.sm/9;
-  if(r.sm>4.2){miss=0;return vote(r)}
+  if(r.sm>3.8){miss=0;return vote(r)}
   if(++miss>6){lock=null;acc=null}return null}
  pct=0;
  for(let j=0;j<4;j++){let tf=CAND[ci++%CAND.length],r=ev(v,tf);
-  if(r.sm>3.5){[tf,r]=refine(v,tf,r);if(r.sm>4.5){lock=tf;miss=0;acc=null;pct=r.sm/9;return null}}
+  if(r.sm>3.5){[tf,r]=refine(v,tf,r);if(r.sm>4.2){lock=tf;miss=0;acc=null;pct=r.sm/9;return null}}
   pct=Math.max(pct,r.sm/9)}
  return null}
 function refine(v,tf,r,ks,its){
@@ -359,18 +370,18 @@ async function got(c){
  if(await link.probe(c)){pair=c;link.send(c,{t:'paired'});stat('Paired with desktop. Tap here to unpair.');toast('Desktop paired');return}
  openCode(c);
 }
-$('#stat').onclick=()=>{if(pair){pair=null;stat('Unpaired. Fit the three dots to the corners.')}};
+$('#stat').onclick=()=>{if(pair){pair=null;stat('Unpaired. Match the three dots to the rings.')}};
 $('#scan').onclick=async()=>{
  const v=$('#cam');
  try{const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});v.srcObject=s;await v.play()}
  catch(e){return toast('Allow camera access in your browser, or type the code.')}
  try{await tpl()}catch(e){return toast('Scanner could not start')}
- $('#vf').classList.add('on');stat('Fit the three dots to the corners of the triangle');
+ $('#vf').classList.add('on');stat('Match the three dots to the rings');
  let busy=0;
  setInterval(()=>{if(busy||ov.classList.contains('show'))return;busy=1;
-  try{const c=scan(v);
+  try{const c=scan(v);$('#vf').classList.toggle('lk',!!lock);
    if(c&&Date.now()>(quiet[c]||0)){quiet[c]=Date.now()+4000;got(c)}
-   else if(!pair)stat(lock?'Reading the code\u2026 '+Math.round(pct*100)+'%':'Fit the three dots to the corners'+(pct>.25?' \u00b7 '+Math.round(pct*100)+'%':''))}
+   else if(!pair)stat(lock?'Reading the code\u2026 '+Math.round(pct*100)+'%':'Match the three dots to the rings'+(pct>.25?' \u00b7 '+Math.round(pct*100)+'%':''))}
   finally{busy=0}},120);
 };
 
