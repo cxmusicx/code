@@ -219,7 +219,7 @@ function newSheet(){
   const v=$('#v');let val=kind=='img'?await shrink(v.files[0]):v.value.trim();
   if(!val)return toast(kind=='img'?'Choose an image':'Add something to share');
   if(kind=='url'&&!/^https?:\/\//i.test(val))val='https://'+val;
-  const m=store.get('made');let c,n=0;do{c=String(Math.random()*1e6|0).padStart(6,'0')}while((m[c]||await cloud.get(c))&&++n<20);
+  const m=store.get('made');let c,n=0;do{c=String(Math.random()*1e6|0).padStart(6,'0')}while((m[c]||styles(c).filter(s=>s<4).length<5||await cloud.get(c))&&++n<40);
   const it={type:kind,val,title:$('#ti').value.trim(),pub:$('#pub').checked,t:Date.now()};
   if(auth.u){it.owner=auth.u.uid;it.user=auth.u.name}
   if(!await cloud.put(c,it))return toast('Could not save. Try again');
@@ -329,12 +329,16 @@ function frame(v,tf){
  for(let y=0;y<H;y++){const y0=Math.max(0,y-r),y1=Math.min(H,y+r+1);
   for(let x=0;x<W;x++){const x0=Math.max(0,x-r),x1=Math.min(W,x+r+1),mean=(I[y1*(W+1)+x1]-I[y0*(W+1)+x1]-I[y1*(W+1)+x0]+I[y0*(W+1)+x0])/((x1-x0)*(y1-y0));ob[y*W+x]=g[y*W+x]<mean-dl?1:0}}
  if(DBG){const id=dc.getContext('2d').createImageData(W,H);for(let k=0;k<N;k++){const v=ob[k]?20:240;id.data[k*4]=id.data[k*4+1]=id.data[k*4+2]=v;id.data[k*4+3]=255}dc.getContext('2d').putImageData(id,0,0)}
- let n=0,mn=9,sm=0;const sc=[];
+ let n=0,mn=9,sm=0,nl=0;const sc=[];
  for(let i=0;i<9;i++){const {t,R}=TPL[i];let o=0;for(const p of R)o+=ob[p];
   const e=[0,0,0,0,Math.max(0,1-o/150)];let best=e[4],bs=4;
   for(let q=0;q<4;q++){const T=t[q].T;let tp=0;for(const p of T)tp+=ob[p];const v=tp/(o+T.length-tp||1);e[q]=v;if(v>best){best=v;bs=q}}
-  sc.push(e);n+=bs*5**i;mn=Math.min(mn,best);sm+=best}
- return {c:n<1e6&&mn>.7?String(n).padStart(6,'0'):null,mn,sm,sc}
+  sc.push(e);if(bs<4)nl++;n+=bs*5**i;mn=Math.min(mn,best);sm+=best}
+ let dots=0;
+ for(const p of P){const px=p[0]*2,py=p[1]*2;let gs=0,gn=0;const bg=[];
+  for(let y=Math.max(0,py-32|0);y<Math.min(H,py+32);y++)for(let x=Math.max(0,px-32|0);x<Math.min(W,px+32);x++){const rr=Math.hypot(x-px,y-py),k=y*W+x;if(rr<=9){gs+=g[k];gn++}else if(rr>=24&&!ob[k])bg.push(g[k])}
+  if(gn<50||bg.length<60)continue;bg.sort((a,b)=>a-b);const bl=bg[bg.length>>1],f=(bl-gs/gn)/(bl-lo+1);if(f>.12&&f<.75)dots++}
+ return {c:n<1e6&&mn>.7?String(n).padStart(6,'0'):null,mn,sm,sc,dots,nl}
 }
 const CAND=[];for(const ds of[1,.92,1.08,1.16])for(const dx of[0,-10,10,-20,20])for(const dy of[0,-10,10,-20,20])CAND.push([ds,dx,dy,0]);
 let lock=null,ci=0,miss=0,acc=null,na=0,pct=0;
@@ -344,7 +348,8 @@ function vote(r){
  r.sc.forEach((e,i)=>e.forEach((v,q)=>acc[i][q]+=v));na++;if(na<3)return null;
  const pk=acc.map(e=>{const o=e.map((v,q)=>[v,q]).sort((x,y)=>y[0]-x[0]);return{b:o[0][1],s:o[1][1],m:(o[0][0]-o[1][0])/na}});
  if(na<8&&pk.some(p=>p.m<.1))return null;
- let n=0;pk.forEach((p,i)=>n+=p.b*5**i);
+ let n=0,q0=9,qs=0;pk.forEach((p,i)=>{n+=p.b*5**i;const q=acc[i][p.b]/na;q0=Math.min(q0,q);qs+=q});
+ if(q0<.45||qs/9<.7){if(na>14)acc=null;return null}
  if(n>=1e6){
   const ord=pk.map((p,i)=>[p.m,i]).sort((x,y)=>x[0]-y[0]).slice(0,4);let bst=null;
   for(let k=1;k<16;k++){let x=n,c=0;ord.forEach(([m,i],j)=>{if(k>>j&1){x+=(pk[i].s-pk[i].b)*5**i;c+=m}});if(x<1e6&&(!bst||c<bst.c))bst={x,c}}
@@ -352,23 +357,25 @@ function vote(r){
  acc=null;return String(n).padStart(6,'0')}
 function scan(v){
  if(lock){let r=ev(v,lock);if(r.mn<.85){[lock,r]=refine(v,lock,r,[.25],2)}pct=r.sm/9;
-  if(r.sm>3.8){miss=0;return vote(r)}
+  if(r.sm>3.8&&r.dots>=4&&r.nl>=4){miss=0;return vote(r)}
   if(++miss>6){lock=null;acc=null}return null}
  pct=0;
  for(let j=0;j<4;j++){let tf=CAND[ci++%CAND.length],r=ev(v,tf);
-  if(r.sm>3.5){[tf,r]=refine(v,tf,r);if(r.sm>4.2){lock=tf;miss=0;acc=null;pct=r.sm/9;return null}}
+  if(r.sm>3.5&&r.nl>=4&&r.dots>=2){[tf,r]=refine(v,tf,r);if(r.sm>4.2&&r.dots>=4&&r.nl>=4){lock=tf;miss=0;acc=null;pct=r.sm/9;return null}}
   pct=Math.max(pct,r.sm/9)}
  return null}
 function refine(v,tf,r,ks,its){
- for(const k of ks||[1,.5,.25,.125])for(let it=0;it<(its||8);it++){let bt=tf,br=r;
+ for(const k of ks||[1,.5,.25,.125])for(let it=0;it<(its||4);it++){let bt=tf,br=r;
   for(const d of[[0,8,0,0],[0,-8,0,0],[0,0,8,0],[0,0,-8,0],[.06,0,0,0],[-.06,0,0,0],[0,0,0,.04],[0,0,0,-.04]]){const t2=[tf[0]+d[0]*k,tf[1]+d[1]*k,tf[2]+d[2]*k,tf[3]+d[3]*k],r2=ev(v,t2);if(r2.sm>br.sm){br=r2;bt=t2}}
   if(bt===tf)break;tf=bt;r=br}
  return [tf,r]}
 async function got(c){
- navigator.vibrate&&navigator.vibrate(30);
- if(pair){const m=store.get('made'),s=store.get('scanned'),i=m[c]||s[c]||await cloud.get(c);link.send(pair,{t:'show',code:c,item:i||null});stat('Sent '+c+' to your desktop. Scan another.');return}
- if(await link.probe(c)){pair=c;link.send(c,{t:'paired'});stat('Paired with desktop. Tap here to unpair.');toast('Desktop paired');return}
- openCode(c);
+ const i=store.get('made')[c]||store.get('scanned')[c]||await cloud.get(c);
+ if(pair){if(!i){stat('Code '+c+' does not exist. Scan another.');return}
+  navigator.vibrate&&navigator.vibrate(30);link.send(pair,{t:'show',code:c,item:i});stat('Sent '+c+' to your desktop. Scan another.');return}
+ if(!i){if(await link.probe(c)){pair=c;link.send(c,{t:'paired'});navigator.vibrate&&navigator.vibrate(30);stat('Paired with desktop. Tap here to unpair.');toast('Desktop paired');return}
+  stat('Read '+c+' but no such code exists. Keep scanning.');return}
+ navigator.vibrate&&navigator.vibrate(30);openCode(c);
 }
 $('#stat').onclick=()=>{if(pair){pair=null;stat('Unpaired. Match the three dots to the rings.')}};
 $('#scan').onclick=async()=>{
