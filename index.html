@@ -396,7 +396,6 @@ function decodeG(g){
  const ob=new Uint8Array(N),dl=Math.max(16,.16*(hi-lo)),r=30;
  for(let y=0;y<H;y++){const y0=Math.max(0,y-r),y1=Math.min(H,y+r+1);
   for(let x=0;x<W;x++){const x0=Math.max(0,x-r),x1=Math.min(W,x+r+1),m=(I[y1*(W+1)+x1]-I[y0*(W+1)+x1]-I[y1*(W+1)+x0]+I[y0*(W+1)+x0])/((x1-x0)*(y1-y0));ob[y*W+x]=g[y*W+x]<m-dl?1:0}}
- if(DBG){const q=dc.getContext('2d'),id=q.createImageData(W,H);for(let k=0;k<N;k++){const v=ob[k]?20:240;id.data[k*4]=id.data[k*4+1]=id.data[k*4+2]=v;id.data[k*4+3]=255}q.putImageData(id,0,0)}
  let n=0,mn=9,sm=0,nl=0;
  for(let i=0;i<9;i++){const {t,R}=TPL[i];let o=0;for(const p of R)o+=ob[p];
   let best=Math.max(0,1-o/150),bs=4;
@@ -406,12 +405,21 @@ function decodeG(g){
  for(const p of P){const px=p[0]*2,py=p[1]*2;let gs=0,gn=0;const bg=[];
   for(let y=Math.max(0,py-32|0);y<Math.min(H,py+32);y++)for(let x=Math.max(0,px-32|0);x<Math.min(W,px+32);x++){const rr=Math.hypot(x-px,y-py),k=y*W+x;if(rr<=9){gs+=g[k];gn++}else if(rr>=24&&!ob[k])bg.push(g[k])}
   if(gn<50||bg.length<60)continue;bg.sort((a,b)=>a-b);const bl=bg[bg.length>>1],f=(bl-gs/gn)/(bl-lo+1);if(f>.12&&f<.75)dots++}
- return{c:n<1e6&&mn>.6?String(n).padStart(6,'0'):null,mn,sm,dots,nl}}
+ return{c:n<1e6&&mn>.6?String(n).padStart(6,'0'):null,mn,sm,dots,nl,ob:DBG?ob:null}}
+let lastT=null,lastA=0;
 function analyze(v){
  if(!grab(v))return null;
  const B=blobs(),hy=B.length>=3?hyps(B):[],res=[];
  for(const y of hy){warp(y.h);const r=decodeG(WG);if(r){r.hy=y;res.push(r)}}
- return{res,hy:hy[0]||null}}
+ /* keep reading the code the same way round from frame to frame */
+ const ok=res.filter(r=>r.dots>=4&&r.nl>=3);let pk=null;const now=performance.now();
+ if(ok.length){
+  if(lastT){let bd=25;for(const r of ok){const d=Math.hypot(r.hy.T.x-lastT.x,r.hy.T.y-lastT.y);if(d<bd){bd=d;pk=r}}}
+  if(!pk)pk=ok.reduce((p,q)=>q.sm>p.sm?q:p);
+  lastT={x:pk.hy.T.x,y:pk.hy.T.y};lastA=now;
+  if(DBG&&pk.ob){const q=dc.getContext('2d'),id=q.createImageData(W,H);for(let k=0;k<W*H;k++){const v=pk.ob[k]?20:240;id.data[k*4]=id.data[k*4+1]=id.data[k*4+2]=v;id.data[k*4+3]=255}q.putImageData(id,0,0)}}
+ else if(now-lastA>400)lastT=null;
+ return{res,pick:pk,hy:hy[0]||null}}
 /* what the scanner reads from a code (the code itself plus any rotated look-alikes), so new codes never clash */
 async function altCodes(c){
  await tpl();
@@ -440,6 +448,7 @@ function step(v){
  if(ov.classList.contains('show'))return;
  const a=analyze(v);if(!a)return;
  let best=0,top=null;for(const r of a.res)if(r.sm>best){best=r.sm;top=r}
+ if(a.pick){top=a.pick;best=top.sm}
  const good=top&&top.dots>=4&&top.nl>=3;guide(good?top.hy:null);
  const now=Date.now();
  for(const r of a.res)if(r.c&&r.dots>=4&&r.nl>=4)hits.push({c:r.c,t:now,mn:r.mn});
