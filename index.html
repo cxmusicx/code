@@ -108,7 +108,7 @@ textarea.in{min-height:110px;resize:vertical}
  <svg viewBox="0 0 300 260" aria-hidden="true"><polygon points="150,22 278,238 22,238" fill="var(--vf)" stroke="var(--vf)" stroke-width="36" stroke-linejoin="round"/></svg>
  <video id="cam" playsinline muted></video>
  <svg class="guide" viewBox="0 0 300 260" aria-hidden="true"><path d="M150 15.6L285 243H15Z"/><circle cx="150" cy="15.6" r="15"/><circle cx="15" cy="243" r="15"/><circle cx="285" cy="243" r="15"/></svg>
- <button class="scanhint" id="scan">Tap to scan a code</button>
+ <button class="scanhint" id="scan">Tap to scan</button>
  <button class="edge l" id="eUser">username</button>
  <button class="edge r" id="eCode">code</button>
 </div>
@@ -219,10 +219,10 @@ function newSheet(){
   const v=$('#v');let val=kind=='img'?await shrink(v.files[0]):v.value.trim();
   if(!val)return toast(kind=='img'?'Choose an image':'Add something to share');
   if(kind=='url'&&!/^https?:\/\//i.test(val))val='https://'+val;
-  const m=store.get('made');let c,n=0;do{c=String(Math.random()*1e6|0).padStart(6,'0')}while((m[c]||styles(c).filter(s=>s<4).length<5||await cloud.get(c))&&++n<40);
+  const m=store.get('made');let c,n=0;const free=async x=>{if(m[x]||styles(x).filter(s=>s<4).length<5||await cloud.get(x))return false;const al=await altCodes(x);return al.includes(x)&&!(await Promise.all(al.filter(r=>r!=x).map(r=>m[r]||cloud.get(r)))).some(Boolean)};do{c=String(Math.random()*1e6|0).padStart(6,'0')}while(!(await free(c))&&++n<40);
   const it={type:kind,val,title:$('#ti').value.trim(),pub:$('#pub').checked,t:Date.now()};
   if(auth.u){it.owner=auth.u.uid;it.user=auth.u.name}
-  if(!await cloud.put(c,it))return toast('Could not save. Try again');
+  if(!await cloud.put(c,it))toast('Saved on this device only');
   m[c]=it;if(store.set('made',m)){mine(c,it);tab='made';render();openCode(c,1)}
  };
 }
@@ -312,13 +312,81 @@ async function tpl(){if(TPL)return;const dots=P.map(p=>[p[0]*2,p[1]*2]),cnt=new 
  for(let i=0;i<9;i++){const R=[],own=new Uint8Array(W*H),Rm=TPL[i].Rm;for(let k=0;k<Rm.length;k++)if(Rm[k]&&cnt[k]==1){R.push(k);own[k]=1}
   TPL[i].R=R;TPL[i].t.forEach(q=>{q.T=q.T.filter(k=>own[k])});delete TPL[i].Rm}}
 const DBG=/debug/.test(location.search),dc=document.createElement('canvas');dc.width=W;dc.height=H;dc.style.cssText='display:block;margin:0 auto 16px;width:240px;border-radius:12px';if(DBG)$('#stat').after(dc);
-function frame(v,tf){
- tf=tf||[1,0,0,0];const vw=v.videoWidth,vh=v.videoHeight;if(!vw)return;
- const s=Math.max(300/vw,260/vh),m=2/1.776,a=m*s,sx=(vw-300/s)/2,sy=(vh-260/s)/2;
- cx.setTransform(1,0,0,1,0,0);cx.translate(200+tf[1],156+tf[2]);cx.rotate(tf[3]);cx.scale(tf[0],tf[0]);cx.translate(-200,-156);
- cx.transform(a,0,0,a,48-15*m-a*sx,24-15.6*m-a*sy);cx.drawImage(v,0,0);cx.setTransform(1,0,0,1,0,0);
- const d=cx.getImageData(0,0,W,H).data,N=W*H,g=new Float32Array(N),h=new Uint32Array(256);
- for(let k=0;k<N;k++){const q=.3*d[k*4]+.59*d[k*4+1]+.11*d[k*4+2];g[k]=q;h[q|0]++}
+const PW=480,pcv=document.createElement('canvas'),pcx=pcv.getContext('2d',{willReadFrequently:true}),WG=new Float32Array(W*H);
+let G=null,GW=0,GH=0,VW=0,VH=0,D=null,Mk=null,Er=null,DW=0,DH=0,BGm=null,TMPm=null;
+/* 1. grab a frame as grey values at 480px wide */
+function grab(v){
+ VW=v.videoWidth;VH=v.videoHeight;if(!VW)return false;
+ GW=PW;GH=Math.round(PW*VH/VW);if(pcv.width!=GW||pcv.height!=GH){pcv.width=GW;pcv.height=GH}
+ pcx.drawImage(v,0,0,GW,GH);const d=pcx.getImageData(0,0,GW,GH).data,n=GW*GH;
+ if(!G||G.length!=n)G=new Float32Array(n);
+ for(let k=0;k<n;k++)G[k]=.3*d[k*4]+.59*d[k*4+1]+.11*d[k*4+2];
+ return true}
+/* 2. find round mid-grey blobs (the dots) anywhere in the frame */
+function blobs(){
+ DW=GW>>1;DH=GH>>1;const n=DW*DH;
+ if(!D||D.length!=n){D=new Float32Array(n);Mk=new Uint8Array(n);Er=new Uint8Array(n)}
+ const hs=new Uint32Array(256);
+ for(let y=0;y<DH;y++)for(let x=0;x<DW;x++){const i=2*y*GW+2*x,v=(G[i]+G[i+1]+G[i+GW]+G[i+GW+1])*.25;D[y*DW+x]=v;hs[v|0]++}
+ let c=0,lo,md,hi;for(let k=0;k<256;k++){c+=hs[k];if(lo==null&&c>n*.004)lo=k;if(md==null&&c>n*.5)md=k;if(hi==null&&c>n*.996)hi=k}
+ if(hi-lo<40)return[];
+ if(md<(lo+hi)/2)for(let k=0;k<n;k++)D[k]=255-D[k];
+ if(!BGm||BGm.length!=n){BGm=new Float32Array(n);TMPm=new Float32Array(n)}
+ const R=16;
+ for(let y=0;y<DH;y++)for(let x=0;x<DW;x++){let m=0;for(let i=Math.max(0,x-R),e=Math.min(DW-1,x+R);i<=e;i++){const v=D[y*DW+i];if(v>m)m=v}TMPm[y*DW+x]=m}
+ for(let x=0;x<DW;x++)for(let y=0;y<DH;y++){let m=0;for(let j=Math.max(0,y-R),e=Math.min(DH-1,y+R);j<=e;j++){const v=TMPm[j*DW+x];if(v>m)m=v}BGm[y*DW+x]=m}
+ for(let k=0;k<n;k++){const bg=BGm[k],t=D[k]/bg;Mk[k]=bg>70&&t>.3&&t<.88?1:0}
+ Er.fill(0);
+ for(let y=1;y<DH-1;y++)for(let x=1;x<DW-1;x++){const k=y*DW+x;if(Mk[k]&&Mk[k-1]&&Mk[k+1]&&Mk[k-DW]&&Mk[k+DW])Er[k]=1}
+ const out=[],st=new Int32Array(n),maxA=n/25;
+ for(let k0=0;k0<n;k0++){if(Er[k0]!=1)continue;
+  let sp=0,A=0,sx=0,sy=0,x0=1e9,x1=-1,y0=1e9,y1=-1;st[sp++]=k0;Er[k0]=2;
+  while(sp){const k=st[--sp],x=k%DW,y=(k/DW)|0;A++;sx+=x;sy+=y;if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;
+   if(Er[k-1]==1){Er[k-1]=2;st[sp++]=k-1}if(Er[k+1]==1){Er[k+1]=2;st[sp++]=k+1}if(Er[k-DW]==1){Er[k-DW]=2;st[sp++]=k-DW}if(Er[k+DW]==1){Er[k+DW]=2;st[sp++]=k+DW}}
+  const w=x1-x0+1,h=y1-y0+1;
+  if(A>=4&&A<maxA&&Math.min(w,h)/Math.max(w,h)>.55&&A/(w*h)>.55)out.push({x:sx/A,y:sy/A,r:Math.sqrt(A/Math.PI)+1,A})}
+ return out.sort((p,q)=>q.A-p.A).slice(0,22)}
+/* 3. find three dots forming the code's triangle plus the inner dots, and fit the transform code -> image */
+const sim=(p,q)=>Math.max(p.r,q.r)/Math.min(p.r,q.r)<1.8,dist=(p,q)=>Math.hypot(p.x-q.x,p.y-q.y);
+function affineH(T,BL,BR){
+ const f=(t,l,r)=>[(r-l)/152,(r-l)*(.5/128)-(t-l)/128,l+(r-l)*(-24/152-70/128)+(t-l)*(140/128)];
+ return[...f(T.x,BL.x,BR.x),...f(T.y,BL.y,BR.y),0,0,1]}
+function homog(s,d){
+ const A=[],b=[];for(let i=0;i<4;i++){const[x,y]=s[i],[X,Y]=d[i];A.push([x,y,1,0,0,0,-x*X,-y*X]);b.push(X);A.push([0,0,0,x,y,1,-x*Y,-y*Y]);b.push(Y)}
+ for(let i=0;i<8;i++){let p=i;for(let r=i+1;r<8;r++)if(Math.abs(A[r][i])>Math.abs(A[p][i]))p=r;[A[i],A[p]]=[A[p],A[i]];[b[i],b[p]]=[b[p],b[i]];if(Math.abs(A[i][i])<1e-9)return null;
+  for(let r=i+1;r<8;r++){const f=A[r][i]/A[i][i];for(let c=i;c<8;c++)A[r][c]-=f*A[i][c];b[r]-=f*b[i]}}
+ const h=new Array(8);for(let i=7;i>=0;i--){let t=b[i];for(let c=i+1;c<8;c++)t-=A[i][c]*h[c];h[i]=t/A[i][i]}
+ return[...h,1]}
+const app=(h,u,v)=>{const w=h[6]*u+h[7]*v+1;return[(h[0]*u+h[1]*v+h[2])/w,(h[3]*u+h[4]*v+h[5])/w]};
+function hyps(B){
+ const out=[],n=B.length;
+ for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){if(!sim(B[i],B[j]))continue;
+  for(let k=j+1;k<n;k++){if(!sim(B[i],B[k])||!sim(B[j],B[k]))continue;
+   let a=B[i],b=B[j],c=B[k];const d1=dist(a,b),d2=dist(b,c),d3=dist(c,a),mx=Math.max(d1,d2,d3),mi=Math.min(d1,d2,d3);
+   if(mx/mi>1.7)continue;
+   if((b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x)>0)[b,c]=[c,b];
+   const tri3=[a,b,c],tol=.3*(d1+d2+d3)/3;
+   for(let rot=0;rot<3;rot++){const T=tri3[rot],BL=tri3[(rot+1)%3],BR=tri3[(rot+2)%3],hA=affineH(T,BL,BR);
+    const found=[[62,76],[138,76],[100,140]].map(p=>{const q=app(hA,p[0],p[1]);let bb=null,bd=tol;for(const o of B){if(o===T||o===BL||o===BR||!sim(o,T))continue;const d=Math.hypot(o.x-q[0],o.y-q[1]);if(d<bd){bd=d;bb=o}}return bb});
+    const cnt=found.filter(Boolean).length;if(cnt<2)continue;
+    let h=hA;
+    if(found[0]&&found[1]){const hP=homog([[24,140],[176,140],[62,76],[138,76]],[[BL.x,BL.y],[BR.x,BR.y],[found[0].x,found[0].y],[found[1].x,found[1].y]]);
+     if(hP){const pts=[[100,12,T],[24,140,BL],[176,140,BR],[62,76,found[0]],[138,76,found[1]],[100,140,found[2]]].filter(p=>p[2]);
+      const res=m=>pts.reduce((s,p)=>{const q=app(m,p[0],p[1]);return s+Math.hypot(q[0]-p[2].x,q[1]-p[2].y)},0);
+      if(res(hP)<res(hA))h=hP}}
+    out.push({T,BL,BR,cnt,h,sz:T.r})}}}
+ return out.sort((p,q)=>q.cnt-p.cnt||q.sz-p.sz).slice(0,3)}
+/* 4. warp the frame into code space with that transform */
+function warp(h){
+ let k=0;for(let y=0;y<H;y++){const v=y/2;for(let x=0;x<W;x++,k++){const u=x/2,w=h[6]*u+h[7]*v+1,X=2*(h[0]*u+h[1]*v+h[2])/w,Y=2*(h[3]*u+h[4]*v+h[5])/w;
+  if(!(X>=0&&Y>=0&&X<GW-1&&Y<GH-1)){WG[k]=-1;continue}
+  const xi=X|0,yi=Y|0,fx=X-xi,fy=Y-yi,i=yi*GW+xi;WG[k]=G[i]*(1-fx)*(1-fy)+G[i+1]*fx*(1-fy)+G[i+GW]*(1-fx)*fy+G[i+GW+1]*fx*fy}}}
+/* 5. read the nine lines and check the dots */
+function decodeG(g){
+ const N=W*H,h=new Uint32Array(256);let s0=0,cn=0;
+ for(let k=0;k<N;k++)if(g[k]>=0){s0+=g[k];cn++}
+ if(cn<N*.8)return;
+ const mean=s0/cn;for(let k=0;k<N;k++){if(g[k]<0)g[k]=mean;h[g[k]|0]++}
  let c=0,lo,hi;for(let k=0;k<256;k++){c+=h[k];if(lo==null&&c>N*.05)lo=k;if(hi==null&&c>N*.95)hi=k}
  if(hi-lo<40)return;
  const th=(lo+hi)/2;let dk=0;for(let k=0;k<N;k++)if(g[k]<th)dk++;
@@ -327,69 +395,72 @@ function frame(v,tf){
  for(let y=0;y<H;y++){let row=0;for(let x=0;x<W;x++){row+=g[y*W+x];I[(y+1)*(W+1)+x+1]=I[y*(W+1)+x+1]+row}}
  const ob=new Uint8Array(N),dl=Math.max(16,.16*(hi-lo)),r=30;
  for(let y=0;y<H;y++){const y0=Math.max(0,y-r),y1=Math.min(H,y+r+1);
-  for(let x=0;x<W;x++){const x0=Math.max(0,x-r),x1=Math.min(W,x+r+1),mean=(I[y1*(W+1)+x1]-I[y0*(W+1)+x1]-I[y1*(W+1)+x0]+I[y0*(W+1)+x0])/((x1-x0)*(y1-y0));ob[y*W+x]=g[y*W+x]<mean-dl?1:0}}
- if(DBG){const id=dc.getContext('2d').createImageData(W,H);for(let k=0;k<N;k++){const v=ob[k]?20:240;id.data[k*4]=id.data[k*4+1]=id.data[k*4+2]=v;id.data[k*4+3]=255}dc.getContext('2d').putImageData(id,0,0)}
- let n=0,mn=9,sm=0,nl=0;const sc=[];
+  for(let x=0;x<W;x++){const x0=Math.max(0,x-r),x1=Math.min(W,x+r+1),m=(I[y1*(W+1)+x1]-I[y0*(W+1)+x1]-I[y1*(W+1)+x0]+I[y0*(W+1)+x0])/((x1-x0)*(y1-y0));ob[y*W+x]=g[y*W+x]<m-dl?1:0}}
+ if(DBG){const q=dc.getContext('2d'),id=q.createImageData(W,H);for(let k=0;k<N;k++){const v=ob[k]?20:240;id.data[k*4]=id.data[k*4+1]=id.data[k*4+2]=v;id.data[k*4+3]=255}q.putImageData(id,0,0)}
+ let n=0,mn=9,sm=0,nl=0;
  for(let i=0;i<9;i++){const {t,R}=TPL[i];let o=0;for(const p of R)o+=ob[p];
-  const e=[0,0,0,0,Math.max(0,1-o/150)];let best=e[4],bs=4;
-  for(let q=0;q<4;q++){const T=t[q].T;let tp=0;for(const p of T)tp+=ob[p];const v=tp/(o+T.length-tp||1);e[q]=v;if(v>best){best=v;bs=q}}
-  sc.push(e);if(bs<4)nl++;n+=bs*5**i;mn=Math.min(mn,best);sm+=best}
+  let best=Math.max(0,1-o/150),bs=4;
+  for(let q=0;q<4;q++){const T=t[q].T;let tp=0;for(const p of T)tp+=ob[p];const v=tp/(o+T.length-tp||1);if(v>best){best=v;bs=q}}
+  if(bs<4)nl++;n+=bs*5**i;mn=Math.min(mn,best);sm+=best}
  let dots=0;
  for(const p of P){const px=p[0]*2,py=p[1]*2;let gs=0,gn=0;const bg=[];
   for(let y=Math.max(0,py-32|0);y<Math.min(H,py+32);y++)for(let x=Math.max(0,px-32|0);x<Math.min(W,px+32);x++){const rr=Math.hypot(x-px,y-py),k=y*W+x;if(rr<=9){gs+=g[k];gn++}else if(rr>=24&&!ob[k])bg.push(g[k])}
   if(gn<50||bg.length<60)continue;bg.sort((a,b)=>a-b);const bl=bg[bg.length>>1],f=(bl-gs/gn)/(bl-lo+1);if(f>.12&&f<.75)dots++}
- return {c:n<1e6&&mn>.7?String(n).padStart(6,'0'):null,mn,sm,sc,dots,nl}
-}
-const CAND=[];for(const ds of[1,.92,1.08,1.16])for(const dx of[0,-10,10,-20,20])for(const dy of[0,-10,10,-20,20])CAND.push([ds,dx,dy,0]);
-let lock=null,ci=0,miss=0,acc=null,na=0,pct=0;
-const ev=(v,tf)=>frame(v,tf)||{mn:0,sm:0};
-function vote(r){
- if(!acc){acc=Array.from({length:9},()=>[0,0,0,0,0]);na=0}
- r.sc.forEach((e,i)=>e.forEach((v,q)=>acc[i][q]+=v));na++;if(na<3)return null;
- const pk=acc.map(e=>{const o=e.map((v,q)=>[v,q]).sort((x,y)=>y[0]-x[0]);return{b:o[0][1],s:o[1][1],m:(o[0][0]-o[1][0])/na}});
- if(na<8&&pk.some(p=>p.m<.1))return null;
- let n=0,q0=9,qs=0;pk.forEach((p,i)=>{n+=p.b*5**i;const q=acc[i][p.b]/na;q0=Math.min(q0,q);qs+=q});
- if(q0<.45||qs/9<.7){if(na>14)acc=null;return null}
- if(n>=1e6){
-  const ord=pk.map((p,i)=>[p.m,i]).sort((x,y)=>x[0]-y[0]).slice(0,4);let bst=null;
-  for(let k=1;k<16;k++){let x=n,c=0;ord.forEach(([m,i],j)=>{if(k>>j&1){x+=(pk[i].s-pk[i].b)*5**i;c+=m}});if(x<1e6&&(!bst||c<bst.c))bst={x,c}}
-  if(!bst){if(na>14)acc=null;return null}n=bst.x}
- acc=null;return String(n).padStart(6,'0')}
-function scan(v){
- if(lock){let r=ev(v,lock);if(r.mn<.85){[lock,r]=refine(v,lock,r,[.25],2)}pct=r.sm/9;
-  if(r.sm>3.8&&r.dots>=4&&r.nl>=4){miss=0;return vote(r)}
-  if(++miss>6){lock=null;acc=null}return null}
- pct=0;
- for(let j=0;j<4;j++){let tf=CAND[ci++%CAND.length],r=ev(v,tf);
-  if(r.sm>3.5&&r.nl>=4&&r.dots>=2){[tf,r]=refine(v,tf,r);if(r.sm>4.2&&r.dots>=4&&r.nl>=4){lock=tf;miss=0;acc=null;pct=r.sm/9;return null}}
-  pct=Math.max(pct,r.sm/9)}
- return null}
-function refine(v,tf,r,ks,its){
- for(const k of ks||[1,.5,.25,.125])for(let it=0;it<(its||4);it++){let bt=tf,br=r;
-  for(const d of[[0,8,0,0],[0,-8,0,0],[0,0,8,0],[0,0,-8,0],[.06,0,0,0],[-.06,0,0,0],[0,0,0,.04],[0,0,0,-.04]]){const t2=[tf[0]+d[0]*k,tf[1]+d[1]*k,tf[2]+d[2]*k,tf[3]+d[3]*k],r2=ev(v,t2);if(r2.sm>br.sm){br=r2;bt=t2}}
-  if(bt===tf)break;tf=bt;r=br}
- return [tf,r]}
-async function got(c){
- const i=store.get('made')[c]||store.get('scanned')[c]||await cloud.get(c);
+ return{c:n<1e6&&mn>.6?String(n).padStart(6,'0'):null,mn,sm,dots,nl}}
+function analyze(v){
+ if(!grab(v))return null;
+ const B=blobs(),hy=B.length>=3?hyps(B):[],res=[];
+ for(const y of hy){warp(y.h);const r=decodeG(WG);if(r){r.hy=y;res.push(r)}}
+ return{res,hy:hy[0]||null}}
+/* what the scanner reads from a code (the code itself plus any rotated look-alikes), so new codes never clash */
+async function altCodes(c){
+ await tpl();
+ const svg=tri(c).split('var(--ink)').join('#161616').split('var(--dot)').join('#98a2a8').replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" ');
+ const im=new Image();await new Promise(r=>{im.onload=r;im.onerror=r;im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)});
+ const cv=document.createElement('canvas');cv.width=640;cv.height=480;const q=cv.getContext('2d');q.fillStyle='#fff';q.fillRect(0,0,640,480);q.drawImage(im,120,60,400,312);cv.videoWidth=640;cv.videoHeight=480;
+ const a=analyze(cv);return a?[...new Set(a.res.filter(r=>r.c&&r.dots>=4&&r.nl>=4).map(r=>r.c))]:[]}
+setTimeout(()=>tpl().catch(()=>{}),700);
+/* ---- live view: the rings follow the detected dots ---- */
+const GD=$('.guide'),gc=GD.querySelectorAll('circle'),gp=GD.querySelector('path'),DEF=[[150,15.6],[15,243],[285,243]];
+function toBox(p){const s=Math.max(300/VW,260/VH),sx=(VW-300/s)/2,sy=(VH-260/s)/2;return[(p.x*2*VW/GW-sx)*s,(p.y*2*VH/GH-sy)*s]}
+function guide(hy){
+ $('#vf').classList.toggle('lk',!!hy);
+ const q=hy?[hy.T,hy.BL,hy.BR].map(toBox):DEF;
+ q.forEach((p,i)=>{gc[i].setAttribute('cx',p[0]);gc[i].setAttribute('cy',p[1])});
+ gp.setAttribute('d',`M${q[0]}L${q[2]}L${q[1]}Z`)}
+let hits=[];
+function step(v){
+ if(ov.classList.contains('show'))return;
+ const a=analyze(v);if(!a)return;
+ let best=0,top=null;for(const r of a.res)if(r.sm>best){best=r.sm;top=r}
+ guide(top?top.hy:null);
+ const now=Date.now();
+ for(const r of a.res)if(r.c&&r.dots>=4&&r.nl>=4)hits.push({c:r.c,t:now,mn:r.mn});
+ hits=hits.filter(h=>now-h.t<1500);
+ const cnt={};hits.forEach(h=>{cnt[h.c]=(cnt[h.c]||0)+(h.mn>.85?1.5:1)});
+ const ks=Object.keys(cnt).sort((x,y)=>cnt[y]-cnt[x]);
+ if(ks.length&&cnt[ks[0]]>=3&&now>(quiet[ks[0]]||0)){const cs=ks.slice(0,3);cs.forEach(k=>quiet[k]=now+4000);hits=[];got(cs);return}
+ if(!pair)stat(top?'Reading the code\u2026 '+Math.round(best/9*100)+'%':'Point at a code')}
+async function got(cs){
+ let c=cs[0],i=null;
+ for(const k of cs){const it=store.get('made')[k]||store.get('scanned')[k]||await cloud.get(k);if(it){c=k;i=it;break}}
  if(pair){if(!i){stat('Code '+c+' does not exist. Scan another.');return}
   navigator.vibrate&&navigator.vibrate(30);link.send(pair,{t:'show',code:c,item:i});stat('Sent '+c+' to your desktop. Scan another.');return}
- if(!i){if(await link.probe(c)){pair=c;link.send(c,{t:'paired'});navigator.vibrate&&navigator.vibrate(30);stat('Paired with desktop. Tap here to unpair.');toast('Desktop paired');return}
+ if(!i){for(const k of cs)if(await link.probe(k)){pair=k;link.send(k,{t:'paired'});navigator.vibrate&&navigator.vibrate(30);stat('Paired with desktop. Tap here to unpair.');toast('Desktop paired');return}
   stat('Read '+c+' but no such code exists. Keep scanning.');return}
  navigator.vibrate&&navigator.vibrate(30);openCode(c);
 }
-$('#stat').onclick=()=>{if(pair){pair=null;stat('Unpaired. Match the three dots to the rings.')}};
+$('#stat').onclick=()=>{if(pair){pair=null;stat('Unpaired. Point at a code.')}};
 $('#scan').onclick=async()=>{
  const v=$('#cam');
- try{const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});v.srcObject=s;await v.play()}
+ try{const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720},frameRate:{ideal:60,max:60}}});
+  v.srcObject=s;await v.play();
+  try{await s.getVideoTracks()[0].applyConstraints({advanced:[{focusMode:'continuous'}]})}catch(e){}}
  catch(e){return toast('Allow camera access in your browser, or type the code.')}
  try{await tpl()}catch(e){return toast('Scanner could not start')}
- $('#vf').classList.add('on');stat('Match the three dots to the rings');
- let busy=0;
- setInterval(()=>{if(busy||ov.classList.contains('show'))return;busy=1;
-  try{const c=scan(v);$('#vf').classList.toggle('lk',!!lock);
-   if(c&&Date.now()>(quiet[c]||0)){quiet[c]=Date.now()+4000;got(c)}
-   else if(!pair)stat(lock?'Reading the code\u2026 '+Math.round(pct*100)+'%':'Match the three dots to the rings'+(pct>.25?' \u00b7 '+Math.round(pct*100)+'%':''))}
-  finally{busy=0}},120);
+ $('#vf').classList.add('on');stat('Point at a code');
+ const next=f=>v.requestVideoFrameCallback?v.requestVideoFrameCallback(f):requestAnimationFrame(f);
+ const loop=()=>{try{step(v)}catch(e){}next(loop)};next(loop);
 };
 
 /* ---- open shared links like #123456 ---- */
