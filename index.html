@@ -423,24 +423,31 @@ setTimeout(()=>tpl().catch(()=>{}),700);
 /* ---- live view: the rings follow the detected dots ---- */
 const GD=$('.guide'),gc=GD.querySelectorAll('circle'),gp=GD.querySelector('path'),DEF=[[150,15.6],[15,243],[285,243]];
 function toBox(p){const s=Math.max(300/VW,260/VH),sx=(VW-300/s)/2,sy=(VH-260/s)/2;return[(p.x*2*VW/GW-sx)*s,(p.y*2*VH/GH-sy)*s]}
+let cur=null,seen=0;
 function guide(hy){
- $('#vf').classList.toggle('lk',!!hy);
- const q=hy?[hy.T,hy.BL,hy.BR].map(toBox):DEF;
- q.forEach((p,i)=>{gc[i].setAttribute('cx',p[0]);gc[i].setAttribute('cy',p[1])});
+ const now=performance.now();
+ if(hy){const tg=[hy.T,hy.BL,hy.BR].map(toBox);
+  if(!cur)cur=tg;
+  else{const used=[0,0,0];cur=cur.map(c=>{let bj=0,bd=1e9;tg.forEach((t,j)=>{const d=used[j]?1e9:Math.hypot(t[0]-c[0],t[1]-c[1]);if(d<bd){bd=d;bj=j}});used[bj]=1;return[c[0]+(tg[bj][0]-c[0])*.35,c[1]+(tg[bj][1]-c[1])*.35]})}
+  seen=now}
+ const show=cur&&now-seen<350;if(!show)cur=null;
+ $('#vf').classList.toggle('lk',!!show);
+ const q=show?cur:DEF;
+ q.forEach((p,i)=>{gc[i].setAttribute('cx',p[0].toFixed(1));gc[i].setAttribute('cy',p[1].toFixed(1))});
  gp.setAttribute('d',`M${q[0]}L${q[2]}L${q[1]}Z`)}
 let hits=[];
 function step(v){
  if(ov.classList.contains('show'))return;
  const a=analyze(v);if(!a)return;
  let best=0,top=null;for(const r of a.res)if(r.sm>best){best=r.sm;top=r}
- guide(top?top.hy:null);
+ const good=top&&top.dots>=4&&top.nl>=3;guide(good?top.hy:null);
  const now=Date.now();
  for(const r of a.res)if(r.c&&r.dots>=4&&r.nl>=4)hits.push({c:r.c,t:now,mn:r.mn});
  hits=hits.filter(h=>now-h.t<1500);
  const cnt={};hits.forEach(h=>{cnt[h.c]=(cnt[h.c]||0)+(h.mn>.85?1.5:1)});
  const ks=Object.keys(cnt).sort((x,y)=>cnt[y]-cnt[x]);
  if(ks.length&&cnt[ks[0]]>=3&&now>(quiet[ks[0]]||0)){const cs=ks.slice(0,3);cs.forEach(k=>quiet[k]=now+4000);hits=[];got(cs);return}
- if(!pair)stat(top?'Reading the code\u2026 '+Math.round(best/9*100)+'%':'Point at a code')}
+ if(!pair)stat(good?'Reading the code\u2026 '+Math.round(best/9*100)+'%':'Point at a code')}
 async function got(cs){
  let c=cs[0],i=null;
  for(const k of cs){const it=store.get('made')[k]||store.get('scanned')[k]||await cloud.get(k);if(it){c=k;i=it;break}}
