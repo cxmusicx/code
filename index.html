@@ -477,17 +477,33 @@ async function got(cs){
  navigator.vibrate&&navigator.vibrate(30);openCode(c);
 }
 $('#stat').onclick=()=>{if(pair){pair=null;stat('Unpaired. Point at a code.')}};
-$('#scan').onclick=async()=>{
- const v=$('#cam');
- try{const s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720},frameRate:{ideal:60,max:60}}});
-  v.srcObject=s;await v.play();
-  try{await s.getVideoTracks()[0].applyConstraints({advanced:[{focusMode:'continuous'}]})}catch(e){}}
- catch(e){return toast('Allow camera access in your browser, or type the code.')}
- try{await tpl()}catch(e){return toast('Scanner could not start')}
+/* ---- camera: one stream, reused; starts by itself when permission is already granted ---- */
+let cam=null,starting=false,looping=false;
+async function openCam(){
+ let err;
+ for(const c of[{video:{facingMode:'environment',width:{ideal:1280},height:{ideal:720},frameRate:{ideal:60}}},{video:{facingMode:'environment'}},{video:true}]){
+  try{return await navigator.mediaDevices.getUserMedia(c)}catch(e){err=e;if(['NotAllowedError','SecurityError','NotFoundError','NotReadableError'].includes(e.name))break}}
+ throw err}
+async function startScan(auto){
+ if(starting||looping)return;starting=true;const v=$('#cam');
+ try{
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw{name:'Insecure'};
+  if(!cam||!cam.active)cam=await openCam();
+  v.srcObject=cam;await v.play();
+  try{await cam.getVideoTracks()[0].applyConstraints({advanced:[{focusMode:'continuous'}]})}catch(e){}
+  await tpl();
+ }catch(e){
+  starting=false;if(auto)return;
+  const n=e&&e.name;
+  return toast(n=='NotAllowedError'||n=='SecurityError'?'Camera is blocked. Allow it in your browser\u2019s site settings, then tap again.':n=='NotFoundError'?'No camera found on this device.':n=='NotReadableError'?'The camera is busy. Close other apps using it and try again.':n=='Insecure'?'The camera needs a secure (https) page.':'Could not start the camera ('+(n||'error')+').')}
+ starting=false;looping=true;
  $('#vf').classList.add('on');stat('Point at a code');
  const next=f=>v.requestVideoFrameCallback?v.requestVideoFrameCallback(f):requestAnimationFrame(f);
- const loop=()=>{try{step(v)}catch(e){}next(loop)};next(loop);
-};
+ const loop=()=>{try{if(!document.hidden)step(v)}catch(e){}next(loop)};next(loop);
+}
+$('#scan').onclick=()=>startScan(false);
+document.addEventListener('visibilitychange',()=>{const v=$('#cam');if(!document.hidden&&cam&&v.paused)v.play().catch(()=>{})});
+(async()=>{try{if(isDesk())return;const p=await navigator.permissions.query({name:'camera'});if(p.state=='granted')startScan(true);p.onchange=()=>{if(p.state=='granted')startScan(true)}}catch(e){}})();
 
 /* ---- open shared links like #123456 ---- */
 function hash(){const h=location.hash.slice(1);if(/^\d{6}$/.test(h))openCode(h,1);else if(/^u-[a-z0-9-]{3,20}$/.test(h))userPage(h.slice(2))}
