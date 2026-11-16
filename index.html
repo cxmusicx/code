@@ -406,19 +406,29 @@ function decodeG(g){
   for(let y=Math.max(0,py-32|0);y<Math.min(H,py+32);y++)for(let x=Math.max(0,px-32|0);x<Math.min(W,px+32);x++){const rr=Math.hypot(x-px,y-py),k=y*W+x;if(rr<=9){gs+=g[k];gn++}else if(rr>=24&&!ob[k])bg.push(g[k])}
   if(gn<50||bg.length<60)continue;bg.sort((a,b)=>a-b);const bl=bg[bg.length>>1],f=(bl-gs/gn)/(bl-lo+1);if(f>.12&&f<.75)dots++}
  return{c:n<1e6&&mn>.6?String(n).padStart(6,'0'):null,mn,sm,dots,nl,ob:DBG?ob:null}}
-let lastT=null,lastA=0;
+let trk=null,lastA=0;const TMP=new Float32Array(W*H),dd=(p,q)=>Math.hypot(p.x-q.x,p.y-q.y);
 function analyze(v){
  if(!grab(v))return null;
  const B=blobs(),hy=B.length>=3?hyps(B):[],res=[];
  for(const y of hy){warp(y.h);const r=decodeG(WG);if(r){r.hy=y;res.push(r)}}
- /* keep reading the code the same way round from frame to frame */
- const ok=res.filter(r=>r.dots>=4&&r.nl>=3);let pk=null;const now=performance.now();
+ const ok=res.filter(r=>r.dots>=4&&r.nl>=3),now=performance.now();let pk=null;
  if(ok.length){
-  if(lastT){let bd=25;for(const r of ok){const d=Math.hypot(r.hy.T.x-lastT.x,r.hy.T.y-lastT.y);if(d<bd){bd=d;pk=r}}}
+  /* stay locked to the same reading of the same triangle */
+  if(trk){let bd=25;for(const r of ok){const d=Math.max(dd(trk.T,r.hy.T),dd(trk.BL,r.hy.BL),dd(trk.BR,r.hy.BR));if(d<bd){bd=d;pk=r}}}
   if(!pk)pk=ok.reduce((p,q)=>q.sm>p.sm?q:p);
-  lastT={x:pk.hy.T.x,y:pk.hy.T.y};lastA=now;
+  const y=pk.hy;
+  if(trk&&Math.max(dd(trk.T,y.T),dd(trk.BL,y.BL),dd(trk.BR,y.BR))<25){
+   if(Math.max(dd(trk.T,y.T),dd(trk.BL,y.BL),dd(trk.BR,y.BR))>6)trk.avg=null;
+   trk.h=trk.h.map((v,i)=>v+(y.h[i]-v)*.6);trk.T=y.T;trk.BL=y.BL;trk.BR=y.BR}
+  else trk={T:y.T,BL:y.BL,BR:y.BR,h:y.h.slice(),avg:null};
+  /* average the flattened code over time so the lines stop shimmering */
+  warp(trk.h);
+  if(trk.avg){for(let k=0;k<W*H;k++)trk.avg[k]=WG[k]<0||trk.avg[k]<0?WG[k]:trk.avg[k]*.5+WG[k]*.5}else trk.avg=Float32Array.from(WG);
+  TMP.set(trk.avg);const r2=decodeG(TMP);
+  if(r2&&r2.dots>=4&&r2.nl>=3){r2.hy=Object.assign({},y,{h:trk.h});res[res.indexOf(pk)]=r2;pk=r2}
+  lastA=now;
   if(DBG&&pk.ob){const q=dc.getContext('2d'),id=q.createImageData(W,H);for(let k=0;k<W*H;k++){const v=pk.ob[k]?20:240;id.data[k*4]=id.data[k*4+1]=id.data[k*4+2]=v;id.data[k*4+3]=255}q.putImageData(id,0,0)}}
- else if(now-lastA>400)lastT=null;
+ else if(now-lastA>400)trk=null;
  return{res,pick:pk,hy:hy[0]||null}}
 /* what the scanner reads from a code (the code itself plus any rotated look-alikes), so new codes never clash */
 async function altCodes(c){
